@@ -1,39 +1,27 @@
 # Standard imports
 import logging
 
-from contextlib import asynccontextmanager
-
 # Third-party imports
-from fastapi.security import HTTPBearer
+from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
-from fastapi import FastAPI, Request, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.exceptions import RequestValidationError
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 # Local imports
-from app.core import settings
+#from app.core import settings
 from app.api import api_router_v1
 from app.exceptions import CustomAppException
-from app.schemas import ValidationError, ErrorResponse #TODO: Fix the error schemas 
-
-
-# Setup logger
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    settings.log_settings()
-    yield
+#from app.schemas import ValidationError, ErrorResponse #TODO: Fix the error schemas 
 
 logger = logging.getLogger(__name__)
 
 # Create FastAPI app
 app = FastAPI(
-    title="Planner Service",
-    description="This is the planner server which connects to and retrieves information from Smartsheet.",
+    title="Game Service",
+    description="This is the game server.",
     version="1.0.0",
 )
-
-security = HTTPBearer()
 
 #Middleware
 @app.exception_handler(CustomAppException)
@@ -61,11 +49,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
 # Routes
 @app.get("/health", include_in_schema=False)
 async def root():
-    return {"message": "Hello From The Planner Service!"}
-
+    return {"message": "Hello From The Game Service!"}
 
 app.include_router(api_router_v1, prefix="/api/v1")

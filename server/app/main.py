@@ -9,7 +9,7 @@ from fastapi.exceptions import RequestValidationError
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 # Local imports
-#from app.core import settings
+from app.core import init_mongo
 from app.api import api_router_v1
 from app.exceptions import CustomAppException
 #from app.schemas import ValidationError, ErrorResponse #TODO: Fix the error schemas 
@@ -22,6 +22,9 @@ app = FastAPI(
     description="This is the game server.",
     version="1.0.0",
 )
+
+# Initialize MongoDB Connection
+init_mongo()
 
 #Middleware
 @app.exception_handler(CustomAppException)

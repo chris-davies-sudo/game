@@ -12,14 +12,31 @@ export default function HomePage() {
     const [mustSpin, setMustSpin] = useState(false);
     const [prizeNumber, setPrizeNumber] = useState(0);
     const [segments, setSegments] = useState([]);
+    const [prizeInfo, setPrizeInfo] = useState(null);
 
     useEffect(() => {
         async function fetchUserData() {
             try {
                 const response = await axios.get("http://localhost:8080/api/v1/game/profile/beautiful");
                 setPoints(response.data.points);
+                
                 const categoriesResponse = await axios.get("http://localhost:8080/api/v1/game/categories");
-                setSegments(categoriesResponse.data.data.map(cat => ({ option: cat.name })));
+    
+                // Map segments with alternating black and red, and green for presents
+                const mappedSegments = categoriesResponse.data.data.map((cat, index) => ({
+                    id: cat._id,
+                    option: cat.name,
+                    category: cat.category,
+                    type: cat.type,
+                    description: cat.description,
+                    point_reward: cat.point_reward,
+                    style: { 
+                        backgroundColor: cat.category === "present" ? "#2B7216" : index % 2 === 0 ? "#000000" : "#9E0602", 
+                        textColor: "#FFFFFF" 
+                    }
+                }));
+    
+                setSegments(mappedSegments);
             } catch (error) {
                 console.error("Error fetching data:", error);
             }
@@ -50,9 +67,38 @@ export default function HomePage() {
     const purchasePowerup = async (powerupId) => {
         try {
             await axios.post(`http://localhost:8080/api/v1/game/purchase-powerup?username=beautiful&powerup_id=${powerupId}`);
-            setPoints(prev => prev - mainPowerups.find(p => p._id === powerupId).cost);
+            
+            // Update points locally
+            const purchasedPowerup = subPowerups.find(p => p._id === powerupId);
+            setPoints(prev => prev - purchasedPowerup.cost);
+    
+            // Remove the purchased power-up from the list
+            setSubPowerups(prev => prev.map(p => 
+                p._id === powerupId ? { ...p, taken: true } : p
+            ));
+            logUserEvent("powerup_purchase", powerupId);
         } catch (error) {
             console.error("Error purchasing power-up:", error);
+        }
+    };
+
+    const logUserEvent = async (eventType, powerupId = null, categoryId = null, pointsEarned = 0) => {
+        try {
+            const params = new URLSearchParams();
+            params.append("username", "beautiful");
+            params.append("event_type", eventType);
+            if (powerupId) params.append("powerup_id", powerupId);
+            if (categoryId) params.append("category_id", categoryId);
+            if (pointsEarned) params.append("points_earned", pointsEarned);
+
+            await axios.post(`http://localhost:8080/api/v1/game/user-events?${params.toString()}`, {}, {
+                headers: {
+                    'x-tenant': 'e1d62053-5cd0-494d-a747-dcb5670be1c1',
+                    'authorization': 'bearer '
+                }
+            });
+        } catch (error) {
+            console.error("Error logging user event:", error);
         }
     };
 
@@ -61,6 +107,14 @@ export default function HomePage() {
         const newPrizeNumber = Math.floor(Math.random() * segments.length);
         setPrizeNumber(newPrizeNumber);
         setMustSpin(true);
+    };
+
+    const handleSpinEnd = () => {
+        setMustSpin(false);
+        const selectedPrize = segments[prizeNumber];
+        console.log(selectedPrize)
+        setPrizeInfo(selectedPrize);
+        logUserEvent("spin", null, selectedPrize.id, selectedPrize.point_reward);
     };
 
     return (
@@ -79,13 +133,19 @@ export default function HomePage() {
                     mustStartSpinning={mustSpin}
                     prizeNumber={prizeNumber}
                     data={segments.length > 0 ? segments : [{ option: "Loading..." }]}
-                    onStopSpinning={() => {
-                        setMustSpin(false);
-                        console.log("Landed on:", segments[prizeNumber]?.option || "Unknown");
-                    }}
-                    backgroundColors={["#EE4040", "#F0CF50", "#815CD1", "#3DA5E0", "#34A24F", "#F9AA1F", "#EC3F3F", "#FF9000"]}
-                    textColors={["#FFFFFF"]}
-                    fontSize="14"
+                    onStopSpinning={handleSpinEnd}
+                    backgroundColors={segments.map(seg => seg.style.backgroundColor)}
+                    textColors={segments.map(() => "#FFFFFF")}
+                    fontSize={12}
+                    outerBorderColor="#000000"
+                    outerBorderWidth={20}
+                    innerRadius={20} // Adjusted to resemble a roulette wheel
+                    innerBorderColor="#000000"
+                    innerBorderWidth={5}
+                    radiusLineColor="#D4AF37"
+                    radiusLineWidth={2}
+                    perpendicularText={false} // Ensures text aligns better with the segments
+                    textDistance={60}
                 />
                 <button 
                     onClick={handleSpinClick} 
@@ -95,6 +155,20 @@ export default function HomePage() {
                     {mustSpin ? "Spinning..." : "Spin"}
                 </button>
             </div>
+
+            {/* Prize Overlay */}
+            {prizeInfo && (
+                <div className="fixed inset-0 flex justify-center items-center p-10">
+                    <div className={`bg-white rounded-lg p-6 w-2/3 max-w-3xl h-auto flex flex-col relative border-4 ${prizeInfo.type === "love" || prizeInfo.type === "lust" ? `border-[${prizeInfo.style.backgroundColor}]` : "border-transparent"}`}>
+                        <button className="absolute top-4 right-4 text-black text-2xl" onClick={() => setPrizeInfo(null)}>
+                            <FaTimes />
+                        </button>
+                        <h2 className="text-3xl font-bold">{prizeInfo.option}</h2>
+                        <p className="mt-4 text-lg">{prizeInfo.description}</p>
+                        <p className="mt-2 font-semibold">Points Reward: {prizeInfo.point_reward}</p>
+                    </div>
+                </div>
+            )}
 
             {/* Shop Overlay */}
             {shopOpen && (
@@ -127,7 +201,15 @@ export default function HomePage() {
                                                 <h3>{powerup.name}</h3>
                                                 <p>{powerup.description}</p>
                                                 <p>Cost: {powerup.cost} points</p>
-                                                <button className="mt-2 px-4 py-2 bg-green-500 text-white rounded-lg" onClick={() => purchasePowerup(powerup._id)}>Purchase</button>
+                                                {powerup.taken ? (
+                                                        <button className="mt-2 px-4 py-2 bg-gray-500 text-white rounded-lg cursor-not-allowed" disabled>
+                                                            Taken
+                                                        </button>
+                                                    ) : (
+                                                        <button className="mt-2 px-4 py-2 bg-green-500 text-white rounded-lg" onClick={() => purchasePowerup(powerup._id, powerup.type)}>
+                                                            Purchase
+                                                        </button>
+                                                )}
                                             </div>
                                         ))}
                                     </div>

@@ -1,17 +1,21 @@
-FROM python:3.11-slim
+FROM python:3.10-slim
 
+# Allow statements and log messages to immediately appear in the Knative logs
+ENV PYTHONUNBUFFERED True
 ENV ENVIRONMENT production
 
-WORKDIR /opt
+WORKDIR /app
 
-COPY ./requirements.txt /opt/app/requirements.txt
-RUN pip install --upgrade pip
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    git \
+    git-lfs \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
-RUN pip install --no-cache-dir --upgrade -r /opt/app/requirements.txt
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 RUN echo "done install"
 
-COPY ./app /opt/app
-COPY ./logging.yaml /opt/logging.yaml
+COPY app/ .
 
-EXPOSE 8000
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--log-config", "/opt/logging.yaml", "--log-level", "info"]
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8080"]

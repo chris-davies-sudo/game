@@ -7,8 +7,8 @@ from typing import List
 from fastapi import status, Depends, APIRouter
 
 # Local imports
-from app.models import PowerUp, Category, UserProfile
-from app.exceptions import CustomAppException
+from models import PowerUp, Category, UserProfile
+from exceptions import CustomAppException
 
 router = APIRouter()
 logger = logging.getLogger("__main__.admin_controller")

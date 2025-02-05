@@ -5,7 +5,7 @@ import logging
 from fastapi import status, Depends, APIRouter
 
 # Local imports
-from app.exceptions import CustomAppException
+from exceptions import CustomAppException
 
 router = APIRouter()
 logger = logging.getLogger("__main__.auth_controller")

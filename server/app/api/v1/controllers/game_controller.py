@@ -8,8 +8,8 @@ from typing import Optional
 from fastapi import status, APIRouter
 
 # Local imports
-from app.exceptions import CustomAppException
-from app.models import PowerUp, Category, UserEvent, UserProfile
+from exceptions import CustomAppException
+from models import PowerUp, Category, UserEvent, UserProfile
 
 router = APIRouter()
 logger = logging.getLogger("__main__.game_controller")

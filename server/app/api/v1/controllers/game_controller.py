@@ -37,6 +37,36 @@ async def get_categories():
         raise CustomAppException("InternalError", 'An unexpected error occurred. Please try again later.', status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
+@router.get("/powerups/main")
+async def get_main_categories():
+    """Fetch categories where sub_type is False."""
+    try:
+        categories = PowerUp.objects(sub_type=False).all()
+        return {"data": [serialize_document(cat) for cat in categories]}
+    except Exception as e:
+        logger.error(f"Error fetching categories: {str(e)}")
+        raise CustomAppException("InternalError", 'An unexpected error occurred. Please try again later.', status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@router.get("/powerups/sub/{powerup_type}")
+async def get_sub_categories(powerup_type: str):
+    """Fetch categories where sub_type is True and matches the provided type."""
+    try:
+        categories = PowerUp.objects(sub_type=True, type=powerup_type).all()
+        return {"data": [serialize_document(cat) for cat in categories]}
+    except Exception as e:
+        logger.error(f"Error fetching categories: {str(e)}")
+        raise CustomAppException("InternalError", 'An unexpected error occurred. Please try again later.', status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+
+
+
+
+
+
+
+
 @router.get("/powerups")
 async def get_powerups():
     try:
@@ -130,12 +160,7 @@ async def log_user_event(username: str, event_type: str, category_id: Optional[s
 
 
 
-# Add present to categories
-# X events until present 
-# Update category if present is used convert to something else 
-# Add get random power up, loss random power up
-# Add get x point amounts, loss x points
+
 # Add image url to categories and power ups
-# colour code to category model
 # Add login/logout
 # Protect routes  

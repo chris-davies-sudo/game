@@ -13,15 +13,16 @@ export default function HomePage() {
     const [prizeNumber, setPrizeNumber] = useState(0);
     const [segments, setSegments] = useState([]);
     const [prizeInfo, setPrizeInfo] = useState(null);
+    // eslint-disable-next-line no-unused-vars
     const [spinCount, setSpinCount] = useState(0);
 
     useEffect(() => {
         async function fetchUserData() {
             try {
-                const response = await axios.get("http://localhost:8080/api/v1/game/profile/beautiful");
+                const response = await axios.get("https://game-868591301492.europe-west2.run.app/api/v1/game/profile/beautiful");
                 setPoints(response.data.points);
                 
-                const categoriesResponse = await axios.get("http://localhost:8080/api/v1/game/categories");
+                const categoriesResponse = await axios.get("https://game-868591301492.europe-west2.run.app/api/v1/game/categories");
     
                 // Map segments with alternating black and red, and green for presents
                 const mappedSegments = categoriesResponse.data.data.map((cat, index) => ({
@@ -48,7 +49,7 @@ export default function HomePage() {
 
     const openShop = async () => {
         try {
-            const response = await axios.get("http://localhost:8080/api/v1/game/powerups/main");
+            const response = await axios.get("https://game-868591301492.europe-west2.run.app/api/v1/game/powerups/main");
             setMainPowerups(response.data.data);
             setShopOpen(true);
         } catch (error) {
@@ -58,7 +59,7 @@ export default function HomePage() {
 
     const loadSubPowerups = async (type) => {
         try {
-            const response = await axios.get(`http://localhost:8080/api/v1/game/powerups/sub/${type}`);
+            const response = await axios.get(`https://game-868591301492.europe-west2.run.app/api/v1/game/powerups/sub/${type}`);
             setSubPowerups(response.data.data);
             setSelectedCategory(type);
         } catch (error) {
@@ -68,7 +69,7 @@ export default function HomePage() {
 
     const purchasePowerup = async (powerupId) => {
         try {
-            await axios.post(`http://localhost:8080/api/v1/game/purchase-powerup?username=beautiful&powerup_id=${powerupId}`);
+            await axios.post(`https://game-868591301492.europe-west2.run.app/api/v1/game/purchase-powerup?username=beautiful&powerup_id=${powerupId}`);
             
             // Update points locally
             const purchasedPowerup = subPowerups.find(p => p._id === powerupId);
@@ -93,7 +94,7 @@ export default function HomePage() {
             if (categoryId) params.append("category_id", categoryId);
             if (pointsEarned) params.append("points_earned", pointsEarned);
 
-            await axios.post(`http://localhost:8080/api/v1/game/user-events?${params.toString()}`, {}, {
+            await axios.post(`https://game-868591301492.europe-west2.run.app/api/v1/game/user-events?${params.toString()}`, {}, {
                 headers: {
                     'x-tenant': 'e1d62053-5cd0-494d-a747-dcb5670be1c1',
                     'authorization': 'bearer '

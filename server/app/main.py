@@ -9,9 +9,9 @@ from fastapi.exceptions import RequestValidationError
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 # Local imports
-from app.core import init_mongo
-from app.api import api_router_v1
-from app.exceptions import CustomAppException
+from core import init_mongo
+from api import api_router_v1
+from exceptions import CustomAppException
 #from app.schemas import ValidationError, ErrorResponse #TODO: Fix the error schemas 
 
 logger = logging.getLogger(__name__)

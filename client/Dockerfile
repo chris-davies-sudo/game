@@ -16,8 +16,8 @@ COPY . .
 # Build the React app
 RUN npm run build
 
-# Expose the port that Vite Preview uses (default 4173)
+# Expose the correct port for Vite Preview
 EXPOSE 4173
 
-# Run Vite preview server
-CMD ["npm", "run", "preview"]
+# Ensure Vite binds to 0.0.0.0 for Cloud Run
+CMD ["npm", "run", "preview", "--", "--host", "0.0.0.0"]

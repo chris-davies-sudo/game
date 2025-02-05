@@ -13,6 +13,7 @@ export default function HomePage() {
     const [prizeNumber, setPrizeNumber] = useState(0);
     const [segments, setSegments] = useState([]);
     const [prizeInfo, setPrizeInfo] = useState(null);
+    const [spinCount, setSpinCount] = useState(0);
 
     useEffect(() => {
         async function fetchUserData() {
@@ -30,6 +31,7 @@ export default function HomePage() {
                     type: cat.type,
                     description: cat.description,
                     point_reward: cat.point_reward,
+                    usage: cat.usage,
                     style: { 
                         backgroundColor: cat.category === "present" ? "#2B7216" : index % 2 === 0 ? "#000000" : "#9E0602", 
                         textColor: "#FFFFFF" 
@@ -103,16 +105,54 @@ export default function HomePage() {
     };
 
     const handleSpinClick = () => {
-        if (segments.length === 0) return;
-        const newPrizeNumber = Math.floor(Math.random() * segments.length);
-        setPrizeNumber(newPrizeNumber);
-        setMustSpin(true);
+        if (segments.length === 0 || mustSpin) return; // Prevent clicking multiple times
+    
+        setSpinCount(prevSpinCount => {
+            const updatedSpinCount = prevSpinCount + 1;
+            let newPrizeNumber;
+    
+            if (updatedSpinCount % 12 === 0) { // Ensure every 6th spin lands on a "present"
+                const presentSegments = segments.filter(seg => seg.category === "present");
+                if (presentSegments.length > 0) {
+                    const selectedPresent = presentSegments[Math.floor(Math.random() * presentSegments.length)];
+                    newPrizeNumber = segments.findIndex(seg => seg.id === selectedPresent.id);
+                } else {
+                    newPrizeNumber = Math.floor(Math.random() * segments.length); // Fallback if no presents exist
+                }
+            } else {
+                newPrizeNumber = Math.floor(Math.random() * segments.length);
+            }
+    
+            setPrizeNumber(newPrizeNumber);
+            setMustSpin(true);
+            return updatedSpinCount; // Correctly increments the spin count
+        });
     };
 
     const handleSpinEnd = () => {
         setMustSpin(false);
+        setSegments(prevSegments => {
+            return prevSegments.map((seg, index) => {
+                if (index === prizeNumber) {
+                    let newUsage = seg.usage - 1;
+                    if (newUsage <= 0) {
+                        return {
+                            ...seg,
+                            usage: 0,
+                            option: "Turn the tables",
+                            description: "You get to give the game master a task, if he passes -50 points for you.",
+                            style: { backgroundColor: "#D4AF37", textColor: "#FFFFFF" },
+                            point_reward: '-50',
+                            category: 'game'
+                        };
+                    }
+                    return { ...seg, usage: newUsage };
+                }
+                return seg;
+            });
+        });
+
         const selectedPrize = segments[prizeNumber];
-        console.log(selectedPrize)
         setPrizeInfo(selectedPrize);
         logUserEvent("spin", null, selectedPrize.id, selectedPrize.point_reward);
     };
@@ -128,7 +168,7 @@ export default function HomePage() {
             </div>
 
             {/* Right Side - Red Background */}
-            <div className="flex-1 flex flex-col justify-center items-center bg-red-500 text-black scale-[1.2]">
+            <div className="flex-1 flex flex-col justify-center items-center bg-[#DC143C] text-black scale-[1.2]">
                 <Wheel
                     mustStartSpinning={mustSpin}
                     prizeNumber={prizeNumber}
@@ -150,10 +190,11 @@ export default function HomePage() {
                 <button 
                     onClick={handleSpinClick} 
                     disabled={mustSpin} 
-                    className={`px-6 py-3 rounded-lg font-bold shadow-lg transition 
-                                ${mustSpin ? "bg-gray-800 text-gray-500 cursor-not-allowed" : "bg-black text-white hover:bg-gray-700"}`}>
+                    className={`px-6 py-3 rounded-lg font-bold shadow-lg transition bg-black text-white
+                                ${mustSpin ? "bg-gray-800 text-gray-500 cursor-not-allowed" : "bg-black text-white hover:bg-gray-700 hover:border-[#D4AF37]"}`}>
                     {mustSpin ? "Spinning..." : "Spin"}
                 </button>
+                
             </div>
 
             {/* Prize Overlay */}

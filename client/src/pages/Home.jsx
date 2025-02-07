@@ -24,20 +24,33 @@ export default function HomePage() {
                 
                 const categoriesResponse = await axios.get("https://game-868591301492.europe-west2.run.app/api/v1/game/categories");
     
-                // Map segments with alternating black and red, and green for presents
-                const mappedSegments = categoriesResponse.data.data.map((cat, index) => ({
-                    id: cat._id,
-                    option: cat.name,
-                    category: cat.category,
-                    type: cat.type,
-                    description: cat.description,
-                    point_reward: cat.point_reward,
-                    usage: cat.usage,
-                    style: { 
-                        backgroundColor: cat.category === "present" ? "#2B7216" : index % 2 === 0 ? "#000000" : "#9E0602", 
-                        textColor: "#FFFFFF" 
+                // Map segments and apply transformation if usage is 0
+                const mappedSegments = categoriesResponse.data.data.map((cat, index) => {
+                    if (cat.usage === 0) {
+                        return {
+                            ...cat,
+                            usage: 0,
+                            option: "Turn the tables",
+                            description: "You get to give the game master a task, if he passes -50 points for you.",
+                            style: { backgroundColor: "#D4AF37", textColor: "#FFFFFF" },
+                            point_reward: '-50',
+                            category: 'game'
+                        };
                     }
-                }));
+                    return {
+                        id: cat._id,
+                        option: cat.name,
+                        category: cat.category,
+                        type: cat.type,
+                        description: cat.description,
+                        point_reward: cat.point_reward,
+                        usage: cat.usage,
+                        style: { 
+                            backgroundColor: cat.category === "present" ? "#2B7216" : index % 2 === 0 ? "#000000" : "#9E0602", 
+                            textColor: "#FFFFFF" 
+                        }
+                    };
+                });
     
                 setSegments(mappedSegments);
             } catch (error) {
@@ -46,6 +59,7 @@ export default function HomePage() {
         }
         fetchUserData();
     }, []);
+    
 
     const openShop = async () => {
         try {
@@ -122,7 +136,7 @@ export default function HomePage() {
                 const updatedSpinCount = prevSpinCount + 1;
                 let newPrizeNumber;
     
-                if (updatedSpinCount === 5) { // Ensure every 12th spin lands on a "present"
+                if (updatedSpinCount === 4) { // Ensure every 12th spin lands on a "present"
                     const presentSegments = segments.filter(seg => seg.category === "present");
                     if (presentSegments.length > 0) {
                         const selectedPresent = presentSegments[Math.floor(Math.random() * presentSegments.length)];

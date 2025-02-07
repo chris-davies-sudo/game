@@ -122,7 +122,7 @@ export default function HomePage() {
                 const updatedSpinCount = prevSpinCount + 1;
                 let newPrizeNumber;
     
-                if (updatedSpinCount === 10) { // Ensure every 12th spin lands on a "present"
+                if (updatedSpinCount === 5) { // Ensure every 12th spin lands on a "present"
                     const presentSegments = segments.filter(seg => seg.category === "present");
                     if (presentSegments.length > 0) {
                         const selectedPresent = presentSegments[Math.floor(Math.random() * presentSegments.length)];

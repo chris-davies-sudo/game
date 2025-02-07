@@ -105,30 +105,44 @@ export default function HomePage() {
         }
     };
 
-    const handleSpinClick = () => {
+    const handleSpinClick = async () => {
         if (segments.length === 0 || mustSpin) return; // Prevent clicking multiple times
     
-        setSpinCount(prevSpinCount => {
-            const updatedSpinCount = prevSpinCount + 1;
-            let newPrizeNumber;
+        try {
+            logUserEvent("spin", null, null, -10000);
+            const response = await axios.get("https://game-868591301492.europe-west2.run.app/api/v1/auth/profile/status");
     
-            if (updatedSpinCount % 12 === 0) { // Ensure every 6th spin lands on a "present"
-                const presentSegments = segments.filter(seg => seg.category === "present");
-                if (presentSegments.length > 0) {
-                    const selectedPresent = presentSegments[Math.floor(Math.random() * presentSegments.length)];
-                    newPrizeNumber = segments.findIndex(seg => seg.id === selectedPresent.id);
-                } else {
-                    newPrizeNumber = Math.floor(Math.random() * segments.length); // Fallback if no presents exist
-                }
-            } else {
-                newPrizeNumber = Math.floor(Math.random() * segments.length);
+            if (!response.data.active) {
+                alert("DID I SAY YOU CAN SPIN?");
+                return;
             }
     
-            setPrizeNumber(newPrizeNumber);
-            setMustSpin(true);
-            return updatedSpinCount; // Correctly increments the spin count
-        });
+            setSpinCount(prevSpinCount => {
+                const updatedSpinCount = prevSpinCount + 1;
+                let newPrizeNumber;
+    
+                if (updatedSpinCount % 12 === 0) { // Ensure every 12th spin lands on a "present"
+                    const presentSegments = segments.filter(seg => seg.category === "present");
+                    if (presentSegments.length > 0) {
+                        const selectedPresent = presentSegments[Math.floor(Math.random() * presentSegments.length)];
+                        newPrizeNumber = segments.findIndex(seg => seg.id === selectedPresent.id);
+                    } else {
+                        newPrizeNumber = Math.floor(Math.random() * segments.length); // Fallback if no presents exist
+                    }
+                } else {
+                    newPrizeNumber = Math.floor(Math.random() * segments.length);
+                }
+    
+                setPrizeNumber(newPrizeNumber);
+                setMustSpin(true);
+                return updatedSpinCount; // Correctly increments the spin count
+            });
+        } catch (error) {
+            console.error("Error checking profile status:", error);
+            alert("Something went wrong while checking your profile.");
+        }
     };
+    
 
     const handleSpinEnd = () => {
         setMustSpin(false);

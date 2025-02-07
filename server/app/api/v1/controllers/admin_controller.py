@@ -4,7 +4,7 @@ import logging
 from typing import List
 
 # Third-party imports
-from fastapi import status, Depends, APIRouter
+from fastapi import status, APIRouter
 
 # Local imports
 from models import PowerUp, Category, UserProfile

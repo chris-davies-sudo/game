@@ -118,10 +118,11 @@ export default function HomePage() {
             }
     
             setSpinCount(prevSpinCount => {
+                console.log(prevSpinCount)
                 const updatedSpinCount = prevSpinCount + 1;
                 let newPrizeNumber;
     
-                if (updatedSpinCount % 12 === 0) { // Ensure every 12th spin lands on a "present"
+                if (updatedSpinCount === 10) { // Ensure every 12th spin lands on a "present"
                     const presentSegments = segments.filter(seg => seg.category === "present");
                     if (presentSegments.length > 0) {
                         const selectedPresent = presentSegments[Math.floor(Math.random() * presentSegments.length)];
@@ -131,6 +132,16 @@ export default function HomePage() {
                     }
                 } else {
                     newPrizeNumber = Math.floor(Math.random() * segments.length);
+    
+                    // Get the indices of present items
+                    const presentIndices = segments
+                        .map((seg, index) => (seg.category === "present" ? index : -1))
+                        .filter(index => index !== -1);
+                
+                    // If the random prize lands on a present item, move it by +1
+                    if (presentIndices.includes(newPrizeNumber)) {
+                        newPrizeNumber = (newPrizeNumber + 1) % segments.length; // Wrap around if needed
+                    }
                 }
     
                 setPrizeNumber(newPrizeNumber);
@@ -183,33 +194,34 @@ export default function HomePage() {
             </div>
 
             {/* Right Side - Red Background */}
-            <div className="flex-1 flex flex-col justify-center items-center bg-[#DC143C] text-black scale-[1.2]">
-                <Wheel
-                    mustStartSpinning={mustSpin}
-                    prizeNumber={prizeNumber}
-                    data={segments.length > 0 ? segments : [{ option: "Loading..." }]}
-                    onStopSpinning={handleSpinEnd}
-                    backgroundColors={segments.map(seg => seg.style.backgroundColor)}
-                    textColors={segments.map(() => "#FFFFFF")}
-                    fontSize={12}
-                    outerBorderColor="#000000"
-                    outerBorderWidth={20}
-                    innerRadius={20} // Adjusted to resemble a roulette wheel
-                    innerBorderColor="#000000"
-                    innerBorderWidth={5}
-                    radiusLineColor="#D4AF37"
-                    radiusLineWidth={2}
-                    perpendicularText={false} // Ensures text aligns better with the segments
-                    textDistance={60}
-                />
-                <button 
-                    onClick={handleSpinClick} 
-                    disabled={mustSpin} 
-                    className={`px-6 py-3 rounded-lg font-bold shadow-lg transition bg-black text-white
-                                ${mustSpin ? "bg-gray-800 text-gray-500 cursor-not-allowed" : "bg-black text-white hover:bg-gray-700 hover:border-[#D4AF37]"}`}>
-                    {mustSpin ? "Spinning..." : "Spin"}
-                </button>
-                
+            <div className="flex-1 flex flex-col justify-center items-center bg-[#DC143C] text-black">
+                <div className="scale-[1.2]">
+                    <Wheel
+                        mustStartSpinning={mustSpin}
+                        prizeNumber={prizeNumber}
+                        data={segments.length > 0 ? segments : [{ option: "Loading..." }]}
+                        onStopSpinning={handleSpinEnd}
+                        backgroundColors={segments.map(seg => seg.style.backgroundColor)}
+                        textColors={segments.map(() => "#FFFFFF")}
+                        fontSize={12}
+                        outerBorderColor="#000000"
+                        outerBorderWidth={20}
+                        innerRadius={20} // Adjusted to resemble a roulette wheel
+                        innerBorderColor="#000000"
+                        innerBorderWidth={5}
+                        radiusLineColor="#D4AF37"
+                        radiusLineWidth={2}
+                        perpendicularText={false} // Ensures text aligns better with the segments
+                        textDistance={60}
+                    />
+                    <button 
+                        onClick={handleSpinClick} 
+                        disabled={mustSpin} 
+                        className={`px-6 py-3 rounded-lg font-bold shadow-lg transition bg-black text-white
+                                    ${mustSpin ? "bg-gray-800 text-gray-500 cursor-not-allowed" : "bg-black text-white hover:bg-gray-700 hover:border-[#D4AF37]"}`}>
+                        {mustSpin ? "Spinning..." : "Spin"}
+                    </button>
+                </div>
             </div>
 
             {/* Prize Overlay */}
@@ -238,13 +250,18 @@ export default function HomePage() {
                         </div>
                         <div className="flex-1 overflow-y-auto p-4">
                             {!selectedCategory ? (
-                                <div className="grid grid-cols-2 gap-4">
-                                    {mainPowerups.map(powerup => (
-                                        <button key={powerup._id} className="p-4 bg-gray-200 rounded-lg text-black font-semibold" onClick={() => loadSubPowerups(powerup.type)}>
-                                            {powerup.name}
-                                        </button>
-                                    ))}
-                                </div>
+                                <div className="grid grid-cols-2 gap-4 mt-8">
+                {mainPowerups.map(powerup => (
+                    <div 
+                        key={powerup._id} 
+                        className="p-4 bg-gray-200 rounded-lg text-black cursor-pointer hover:bg-gray-300"
+                        onClick={() => loadSubPowerups(powerup.type)}
+                    >
+                        <h3 className="font-semibold">{powerup.name}</h3>
+                        <p>{powerup.description}</p>
+                    </div>
+                ))}
+            </div>
                             ) : (
                                 <div>
                                     <div className="flex justify-between items-center mb-4 px-4">
@@ -253,10 +270,10 @@ export default function HomePage() {
                                     </div>
                                     <div className="grid grid-cols-2 gap-4">
                                         {subPowerups.map(powerup => (
-                                            <div key={powerup._id} className="p-4 bg-gray-200 rounded-lg text-black font-semibold">
-                                                <h3>{powerup.name}</h3>
+                                            <div key={powerup._id} className="p-4 bg-gray-200 rounded-lg text-black">
+                                                <h3 className="font-bold text-2xl">{powerup.name}</h3>
                                                 <p>{powerup.description}</p>
-                                                <p>Cost: {powerup.cost} points</p>
+                                                <p className="font-semibold">Cost: {powerup.cost} points</p>
                                                 {powerup.taken ? (
                                                         <button className="mt-2 px-4 py-2 bg-gray-500 text-white rounded-lg cursor-not-allowed" disabled>
                                                             Taken
